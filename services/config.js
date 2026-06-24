@@ -14,9 +14,7 @@ require("dotenv").config();
 const ENV_VARS = [
   "ACCESS_TOKEN",
   "APP_SECRET",
-  "VERIFY_TOKEN",
-  "REDIS_HOST",
-  "REDIS_PORT"
+  "VERIFY_TOKEN"
 ];
 
 module.exports = Object.freeze({
@@ -27,6 +25,7 @@ module.exports = Object.freeze({
 
   // Server configuration
   port: process.env.PORT || 8080,
+  redisUrl: process.env.REDIS_URL,
   redisHost: process.env.REDIS_HOST || "localhost",
   redisPort: process.env.REDIS_PORT || 6379,
 
@@ -36,5 +35,9 @@ module.exports = Object.freeze({
         console.warn("WARNING: Missing the environment variable " + key);
       }
     });
+
+    if (!process.env.REDIS_URL && !process.env.REDIS_HOST) {
+      console.warn("WARNING: Missing Redis configuration (set REDIS_URL or REDIS_HOST)");
+    }
   }
 });

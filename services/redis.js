@@ -10,12 +10,14 @@
 const redis = require('redis');
 const config = require('./config');
 
-const client = redis.createClient({
-  socket: {
-    host: config.redisHost,
-    port: config.redisPort
-  }
-});
+const client = config.redisUrl
+  ? redis.createClient({ url: config.redisUrl })
+  : redis.createClient({
+      socket: {
+        host: config.redisHost,
+        port: config.redisPort
+      }
+    });
 
 client.on('error', (err) => {
   console.error('Redis Client Error', err);
