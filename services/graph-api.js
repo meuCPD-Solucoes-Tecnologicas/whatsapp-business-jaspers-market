@@ -10,11 +10,25 @@
 const { FacebookAdsApi } = require('facebook-nodejs-business-sdk');
 const config = require("./config");
 
-const api = new FacebookAdsApi(config.accessToken);
+let api;
+
+function getApi() {
+  if (!api) {
+    if (!config.accessToken) {
+      throw new Error('ACCESS_TOKEN is required to send WhatsApp messages');
+    }
+
+    api = new FacebookAdsApi(config.accessToken);
+  }
+
+  return api;
+}
 
 module.exports = class GraphApi {
   static async #makeApiCall(messageId, senderPhoneNumberId, requestBody) {
     try {
+      const graphApi = getApi();
+
       // Mark as read and send typing indicator
       if (messageId) {
         const typingBody = {
@@ -26,7 +40,7 @@ module.exports = class GraphApi {
           }
         };
 
-        await api.call(
+        await graphApi.call(
           'POST',
           [`${senderPhoneNumberId}`, 'messages'],
           typingBody
@@ -34,7 +48,7 @@ module.exports = class GraphApi {
       }
 
 
-      const response = await api.call(
+      const response = await graphApi.call(
         'POST',
         [`${senderPhoneNumberId}`, 'messages'],
         requestBody

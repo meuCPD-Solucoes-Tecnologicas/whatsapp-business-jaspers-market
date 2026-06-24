@@ -94,7 +94,8 @@ module.exports = class Conversation {
   static async handleMessage(senderPhoneNumberId, rawMessage) {
     const message = new Message(rawMessage);
 
-    switch (message.type) {
+    try {
+      switch (message.type) {
       case constants.REPLY_INTERACTIVE_MEDIA_ID:
         let interactiveMediaResponse = await sendInteractiveMediaMessage(
           message.id,
@@ -127,6 +128,9 @@ module.exports = class Conversation {
           constants.APP_DEFAULT_MESSAGE
         );
         break;
+      }
+    } catch (error) {
+      console.error('Failed to handle WhatsApp message:', error.message);
     }
   }
 
