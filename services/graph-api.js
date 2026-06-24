@@ -18,7 +18,8 @@ function getApi() {
       throw new Error('ACCESS_TOKEN is required to send WhatsApp messages');
     }
 
-    api = new FacebookAdsApi(config.accessToken);
+    FacebookAdsApi.init(config.accessToken);
+    api = FacebookAdsApi.getDefaultApi();
   }
 
   return api;
@@ -31,20 +32,24 @@ module.exports = class GraphApi {
 
       // Mark as read and send typing indicator
       if (messageId) {
-        const typingBody = {
-          messaging_product: "whatsapp",
-          status: "read",
-          message_id: messageId,
-          "typing_indicator": {
-            "type": "text"
-          }
-        };
+        try {
+          const typingBody = {
+            messaging_product: "whatsapp",
+            status: "read",
+            message_id: messageId,
+            "typing_indicator": {
+              "type": "text"
+            }
+          };
 
-        await graphApi.call(
-          'POST',
-          [`${senderPhoneNumberId}`, 'messages'],
-          typingBody
-        );
+          await graphApi.call(
+            'POST',
+            [`${senderPhoneNumberId}`, 'messages'],
+            typingBody
+          );
+        } catch (error) {
+          console.warn('Could not send read/typing indicator:', error.message);
+        }
       }
 
 
