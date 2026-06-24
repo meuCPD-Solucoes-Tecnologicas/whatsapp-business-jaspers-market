@@ -85,6 +85,22 @@ async function markMessageForFollowUp(messageId) {
   await Cache.insert(messageId);
 }
 
+async function sendWithTemplateFallback(messageId, senderPhoneNumberId, recipientPhoneNumber, sendTemplate, fallbackText) {
+  try {
+    const response = await sendTemplate();
+    await markMessageForFollowUp(response.messages[0].id);
+    return response;
+  } catch (error) {
+    console.error('Template send failed, using text fallback:', error.message);
+    return GraphApi.messageWithText(
+      messageId,
+      senderPhoneNumberId,
+      recipientPhoneNumber,
+      fallbackText
+    );
+  }
+}
+
 
 module.exports = class Conversation {
   constructor(phoneNumberId) {
@@ -97,28 +113,43 @@ module.exports = class Conversation {
     try {
       switch (message.type) {
       case constants.REPLY_INTERACTIVE_MEDIA_ID:
-        let interactiveMediaResponse = await sendInteractiveMediaMessage(
+        await sendWithTemplateFallback(
           message.id,
           senderPhoneNumberId,
-          message.senderPhoneNumber
+          message.senderPhoneNumber,
+          () => sendInteractiveMediaMessage(
+            message.id,
+            senderPhoneNumberId,
+            message.senderPhoneNumber
+          ),
+          "Free delivery for all online orders with Jasper's Market! Visit developers.facebook.com to learn more."
         );
-        await markMessageForFollowUp(interactiveMediaResponse.messages[0].id);
         break;
       case constants.REPLY_MEDIA_CAROUSEL_ID:
-        let mediaCarouselResponse = await sendMediaCarouselMessage(
+        await sendWithTemplateFallback(
           message.id,
           senderPhoneNumberId,
-          message.senderPhoneNumber
+          message.senderPhoneNumber,
+          () => sendMediaCarouselMessage(
+            message.id,
+            senderPhoneNumberId,
+            message.senderPhoneNumber
+          ),
+          "Our in-house chefs have prepared delicious summer recipes for you! Check developers.facebook.com for recipe ideas."
         );
-        await markMessageForFollowUp(mediaCarouselResponse.messages[0].id);
         break;
       case constants.REPLY_OFFER_ID:
-        let ltoResponse = await sendLimitedTimeOfferMessage(
+        await sendWithTemplateFallback(
           message.id,
           senderPhoneNumberId,
-          message.senderPhoneNumber
+          message.senderPhoneNumber,
+          () => sendLimitedTimeOfferMessage(
+            message.id,
+            senderPhoneNumberId,
+            message.senderPhoneNumber
+          ),
+          "Fresh strawberries at Jasper's Market are now 20% off! Use code BERRIES20 at checkout."
         );
-        await markMessageForFollowUp(ltoResponse.messages[0].id);
         break;
       default:
         await sendTryOutDemoMessage(
